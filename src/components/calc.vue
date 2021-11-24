@@ -1,46 +1,98 @@
 <template>
-  <div>
-    <div>
-      <input type="number" v-model.number="op1">
-      <input type="number" v-model.number="op2">
-      = {{ result }}
+  <div class="hello">
+    <h1> Calculator </h1>
+    <input type="number" v-model.number="num1"/>&nbsp;
+    <input type="number" v-model.number="num2"/>
+    = {{ result }}
+    <div class="error" v-if="error">
+        {{ error }}
     </div>
-    <div>
-      <button @click="result = op1 + op2">+</button>
-      <button @click="sub">-</button>
-      <button @click="div">/</button>
-      <button @click="mult">*</button>
-      <button @click="exp">exp</button>
+    <div class="operations">
+      <div>
+        <button v-for="action in operations" :key="action.operation" @click="calculate(action.operation)"> {{ action.sign }} </button>
+      </div>
+    </div>
+    <div class="keyboard">
+      <label>
+        <input type="checkbox" id="showKeyboard" v-model="showKeyboard">
+        Show Keyboard
+      </label>
+      <div class="buttons" v-if="showKeyboard">
+        <button v-for="(button,btn) in buttons" :key="btn" @click="buttonClickHandler(+button)" :data-num="+button"> {{ button }} </button>
+
+        <button @click="eraseDigitClickHandler">&lt;--</button>
+      </div>
+    </div>
+    <div class="operands">
+      <label>
+        <input type="radio" id="one" :value='+1' v-model="operandChosend">
+        Operand 1
+      </label>
+      <label>
+        <input type="radio" id="two" :value='+2' v-model="operandChosend">
+        Operand 2
+      </label>
     </div>
   </div>
 </template>
 
 <script>
+import Vue from 'vue'
 export default {
-  name: 'Calc',
+  name: 'Calculator',
+  props: {
+    msg: String
+  },
   data: () => ({
-    op1: 0,
-    op2: 0,
+    num1: '',
+    num2: '',
     result: 0,
+    showKeyboard: true,
+    buttons: ['0','1','2','3','4','5','6','7','8','9'],
+    operations: [{ operation: 'add', sign: '+' }, { operation: 'subtract', sign: '-' }, { operation: 'multiply', sign: '*' }, { operation: 'devide', sign: '/' }, { operation: 'modulus', sign: '%' }, { operation: 'power', sign: 'x^y' }],
+    operandChosend: 1,
+    error: '',
+    log: null,
+    logs: {}
   }),
   methods: {
-    sub() {
-      this.result = this.op1 - this.op2;
+    eraseDigitClickHandler () {
+    if (this.operandChosend === 1) {
+       this.num1 = this.num1.slice(0, this.num1.length - 1)
+     } else {
+       this.num2 = this.num2.slice(0, this.num2.length - 1)
+     }
     },
-    div() {
-      if(this.op2 === 0){
-          this.result = 'вы ввели недопустимое значение'
+    buttonClickHandler (num) {
+      if (this.operandChosend === 1) {
+        this.num1 += num
+      } else {
+        this.num2 += num
       }
-      else{
-          this.result = this.op1 / this.op2;
+    },
+    calculate (op) {
+      const { num1, num2 } = this
+      this.error = ''
+      const operationsMapping = {
+        add: () => +num1 + +num2,
+        subtract: () => num1 - num2,
+        multiply: () => num1 * num2,
+        devide: () => {
+          if (num2 === 0) {
+            this.error = 'Вы ввели недопустимое значение'
+          }
+          return num1 / num2
+        },
+        modulus: () => num1 % num2,
+        power: () => Math.pow(num1, num2)
       }
-    },
-    mult() {
-      this.result = this.op1 * this.op2;
-    },
-    exp() {
-        this.result = this.op1 ** this.op2;
+      this.result = operationsMapping[op]()
+      // this.logs[Date.now()] = `${num1} ${op} ${num2} = ${this.result}`
+      Vue.set(this.logs, Date.now(), `${num1} ${op} ${num2} = ${this.result}`)
     }
-  },
-};
+  }
+}
 </script>
+<style>
+
+</style>
